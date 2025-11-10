@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MCA Chatbot</title>
+
+<style>
+  :root {
+    --primary: #1f6feb;
+    --muted-bg: #eef2ff;
+    --accent: #e0e7ff;
+    --text-muted: #475569;
+  }
+
+  body {
+    height: 100%;
+    margin: 0;
+    font-family: Inter, Arial, Helvetica, sans-serif;
+    background: #f3f4f6;
+    color: #0f172a;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 20px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 30px rgba(2,6,23,0.08);
+    min-height: 84vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  .header {
+    background: var(--primary);
+    color: #fff;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header h1 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .header button {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  /* UID Section */
+  .uid-area {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eef2ff;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .uid-area label {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+  }
+
+  .uid-area input {
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    min-width: 200px;
+  }
+
+  .uid-area button {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .uid-area .small {
+    font-size: 0.85rem;
+    color: #ef4444;
+  }
+
+  /* Chat */
+  .chat {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background: #f9fafb;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .message {
+    max-width: 74%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    opacity: 0;
+    transform: translateY(6px);
+    animation: fadeIn 220ms forwards;
+  }
+
+  .bot { background: var(--muted-bg); align-self: flex-start; color: #0b1220; }
+  .user { background: var(--primary); color: #fff; align-self: flex-end; }
+
+  @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+  /* Suggestions */
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .suggestion {
+    background: var(--accent);
+    color: #0f3a93;
+    padding: 6px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    border: none;
+    font-size: 0.92rem;
+  }
+
+  /* Footer */
+  .footer {
+    padding: 12px;
+    border-top: 1px solid #eef2ff;
+    background: #fff;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .footer input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+  }
+
+  .footer select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+  }
+
+  .footer button {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .muted {
+    background: #eef2ff;
+    color: var(--primary);
+    border: 1px solid #cfe0ff;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 600px) {
+    .container { margin: 0; border-radius: 0; min-height: 100vh; }
+    .uid-area { flex-direction: column; align-items: flex-start; }
+    .footer { flex-direction: column; align-items: stretch; }
+    .footer button { width: 100%; }
+  }
+</style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>MCA Chatbot</h1>
+      <div>
+        <button id="resetBtn">Reset</button>
+        <button id="muteBtn" class="muted">Mute</button>
+      </div>
+    </div>
+
+    <!-- UID Input -->
+    <div class="uid-area" id="uidArea">
+      <label for="uidInput">Enter UID (or skip)</label>
+      <input id="uidInput" placeholder="24MCI10130" />
+      <button id="uidSubmit">Continue</button>
+      <button id="uidSkip" style="background:#fff;border:1px solid #d1d5db;color:#0b1220;">Skip</button>
+      <div id="uidMsg" class="small"></div>
+    </div>
+
+    <!-- Chat Area -->
+    <div id="chat" class="chat"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <input id="messageInput" type="text" placeholder="Type your message..." />
+      <select id="language" title="Select language for chatbot" >
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="pa">Punjabi</option>
+      </select>
+      <button id="voiceBtn">Voice</button>
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const uidArea = document.getElementById('uidArea');
+  const uidInput = document.getElementById('uidInput');
+  const uidSubmit = document.getElementById('uidSubmit');
+  const uidSkip = document.getElementById('uidSkip');
+  const uidMsg = document.getElementById('uidMsg');
+  const chat = document.getElementById('chat');
+  const messageInput = document.getElementById('messageInput');
+  const language = document.getElementById('language');
+  const sendBtn = document.getElementById('sendBtn');
+  const voiceBtn = document.getElementById('voiceBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const muteBtn = document.getElementById('muteBtn');
+
+  let USER_UID = localStorage.getItem('mca_uid') || '';
+  let MUTED = localStorage.getItem('mca_muted') === '1';
+
+  function setMuted(v) {
+    MUTED = !!v;
+    localStorage.setItem('mca_muted', MUTED ? '1' : '0');
+    muteBtn.textContent = MUTED ? 'Unmute' : 'Mute';
+    if (MUTED && window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+  setMuted(MUTED);
+
+  function addMessage(cls, text) {
+    const m = document.createElement('div');
+    m.className = 'message ' + cls;
+    m.textContent = text;
+    chat.appendChild(m);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function speak(text, lang) {
+    if (MUTED) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang === 'hi' ? 'hi-IN' : (lang === 'pa' ? 'pa-IN' : 'en-US');
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
+
+  function showSuggestions(arr) {
+    if (!arr || !arr.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'suggestions';
+    arr.forEach(s => {
+      const b = document.createElement('button');
+      b.className = 'suggestion';
+      b.textContent = s;
+      b.onclick = () => { messageInput.value = s; sendMessage(); };
+      wrap.appendChild(b);
+    });
+    chat.appendChild(wrap);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  async function postJSON(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+
+  uidSubmit.onclick = async () => {
+    const uid = uidInput.value.trim();
+    if (!uid) return;
+    uidMsg.textContent = '';
+    const data = await postJSON('/set_uid', { uid });
+    if (data.ok) {
+      USER_UID = uid;
+      localStorage.setItem('mca_uid', USER_UID);
+      uidArea.style.display = 'none';
+      addMessage('bot', data.response);
+      speak(data.response, 'en');
+      if (data.suggestions) showSuggestions(data.suggestions);
+    } else {
+      uidMsg.textContent = data.message || 'UID not found';
+    }
+  };
+
+  uidSkip.onclick = () => {
+    USER_UID = '';
+    localStorage.removeItem('mca_uid');
+    uidArea.style.display = 'none';
+    addMessage('bot', 'Welcome, Guest.');
+    speak('Welcome, Guest.', 'en');
+  };
+
+  resetBtn.onclick = async () => {
+    await fetch('/reset', { method: 'POST' });
+    localStorage.removeItem('mca_uid');
+    USER_UID = '';
+    uidArea.style.display = 'flex';
+    chat.innerHTML = '';
+    addMessage('bot', 'Chat reset.');
+  };
+
+  muteBtn.onclick = () => setMuted(!MUTED);
+
+  sendBtn.onclick = sendMessage;
+  messageInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
+  async function sendMessage() {
+    const txt = messageInput.value.trim();
+    if (!txt) return;
+    addMessage('user', txt);
+    messageInput.value = '';
+    const data = await postJSON('/chat', { message: txt, uid: USER_UID, language: language.value });
+    addMessage('bot', data.response);
+    speak(data.response, language.value);
+    if (data.suggestions) showSuggestions(data.suggestions);
+  }
+
+  voiceBtn.onclick = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { addMessage('bot', 'Speech recognition not supported.'); return; }
+    const r = new SR();
+    r.lang = language.value === 'hi' ? 'hi-IN' : (language.value === 'pa' ? 'pa-IN' : 'en-US');
+    r.onresult = e => { messageInput.value = e.results[0][0].transcript; sendMessage(); };
+    r.start();
+  };
+
+})();
+</script>
+</body>
+</html>

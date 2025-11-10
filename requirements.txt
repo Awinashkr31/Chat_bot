@@ -1,0 +1,7 @@
+Flask
+sentence-transformers
+tensorflow
+scikit-learn
+numpy
+deep-translator
+gTTS

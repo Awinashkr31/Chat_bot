@@ -1,0 +1,451 @@
+ {
+    "intents": [
+ 
+ {
+            "tag": "greeting",
+            "patterns": [
+                "Hi",
+                "Hello",
+                "Good morning",
+                "Hey",
+                "How are you?",
+                "What's up?",
+                "Good evening"
+            ],
+            "responses": [
+                "Hello! Welcome to Chandigarh University.",
+                "Hi there! How can I assist you today?",
+                "Good to see you! How may I help regarding MCA at Chandigarh University?"
+            ],
+             "suggestions" : [ "your developers",
+        "who are you",
+        "college timing",
+        "working hours",
+        "when is college open",
+        "what are CU timings",
+        "college hours",
+        "college contact number",
+        "CU phone number",
+        "contact info",
+        "how to contact college",
+        "courses offered",
+        "MCA course",
+        "fee",
+        "tuition fee",
+        "college fee structure",
+        "MCA fees",
+        "college address",
+        "where is college",
+        "location of college",
+        "how to reach Chandigarh University",
+        "hostel",
+        "hostel facility",
+        "is there a hostel",
+        "hostel details",
+        "hostel fees",
+        "events",
+        "college events",
+        "annual function",
+        "fest",
+        "activities",
+        "documents required for admission",
+        "what to bring for admission",
+        "admission documents",
+        "MCA syllabus",
+        "course syllabus",
+        "syllabus of MCA",
+        "curriculum",
+        "subjects",
+        "library",
+        "book facility",
+        "is there library",
+        "library timing",
+        "college infrastructure",
+        "campus",
+        "labs",
+        "building",
+        "canteen",
+        "food",
+        "cafeteria",
+        "food facility",
+        "admission process",
+        "how to apply",
+        "how to take admission",
+        "MCA admission",
+        "scholarship",
+        "scholarship details",
+        "scholarship programs",
+        "merit scholarship",
+        "college facilities",
+        "campus facilities",
+        "available facilities",
+        "what can you do",
+        "how can you help",
+        "MCA specialization",
+        "programs available",
+        "list of MCA courses"
+    
+    ]
+        },
+        {
+            "tag": "goodbye",
+            "patterns": [
+                "bye",
+                "goodbye",
+                "see you",
+                "talk later",
+                "catch you later"
+            ],
+            "responses": [
+                "Goodbye! Have a great day ahead.",
+                "See you soon at Chandigarh University.",
+                "Take care! Chandigarh University is always here to help you."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "creator",
+            "patterns": [
+                "who created you",
+                "your developers",
+                "your creators",
+                "who made you"
+            ],
+            "responses": [
+                "I was developed by students of the University Institute of Computing (UIC), Chandigarh University."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "name",
+            "patterns": [
+                "your name",
+                "what is your name",
+                "who are you",
+                "what are you called"
+            ],
+            "responses": [
+                "You can call me CU SmartBot.",
+                "I am CU Smart Assistant, here to guide you about MCA and Chandigarh University."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "hours",
+            "patterns": [
+                "college timing",
+                "working hours",
+                "when is college open",
+                "what are CU timings",
+                "college hours"
+            ],
+            "responses": [
+                "Chandigarh University operates from 9:00 AM to 5:00 PM, Monday to Saturday."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "number",
+            "patterns": [
+                "college contact number",
+                "CU phone number",
+                "contact info",
+                "how to contact college"
+            ],
+            "responses": [
+                "You can contact Chandigarh University at +91 160 3051003 or visit https://www.cuchd.in/contact-us.php."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "course",
+            "patterns": [
+                "courses offered",
+                "MCA course",
+                "MCA specialization",
+                "programs available",
+                "list of MCA courses"
+            ],
+            "responses": [
+                "Chandigarh University offers a 2-year MCA program with specializations in Artificial Intelligence, Data Science, Cloud Computing, and Full Stack Development. Details: https://www.cuchd.in/uic/master-of-computer-applications.php."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "fees",
+            "patterns": [
+                "fee",
+                "tuition fee",
+                "college fee structure",
+                "MCA fees"
+            ],
+            "responses": [
+                "The MCA program fee is approximately ₹85,000 per semester. For detailed fee information, visit https://www.cuchd.in/admissions/fee-structure.php."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "location",
+            "patterns": [
+                "college address",
+                "where is college",
+                "location of college",
+                "how to reach Chandigarh University"
+            ],
+            "responses": [
+                "Chandigarh University is located at NH-05 Chandigarh-Ludhiana Highway, Gharuan, Mohali, Punjab 140413. View on map: https://goo.gl/maps/qcJbG6NwK3F2."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "hostel",
+            "patterns": [
+                "hostel",
+                "hostel facility",
+                "is there a hostel",
+                "hostel details",
+                "hostel fees"
+            ],
+            "responses": [
+                "Chandigarh University provides separate hostels for boys and girls with AC and Non-AC options. For hostel details, visit https://www.cuchd.in/student-services/hostel.php."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "event",
+            "patterns": [
+                "events",
+                "college events",
+                "annual function",
+                "fest",
+                "activities"
+            ],
+            "responses": [
+                "UIC organizes academic and technical events like Hackathons, CU Tech Invent, and CU Fest. Check updates at https://www.cuchd.in/news-events/."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "document",
+            "patterns": [
+                "documents required for admission",
+                "what to bring for admission",
+                "admission documents"
+            ],
+            "responses": [
+                "Documents required include 10th and 12th mark sheets, graduation degree (for MCA), ID proof, passport-size photos, and migration certificate. For more information visit https://www.cuchd.in/admissions/."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "syllabus",
+            "patterns": [
+                "MCA syllabus",
+                "course syllabus",
+                "syllabus of MCA",
+                "curriculum",
+                "subjects"
+            ],
+            "responses": [
+                "The MCA curriculum includes courses on Python, Java, Machine Learning, Cloud Computing, and AI. For the complete syllabus, visit https://www.cuchd.in/uic/master-of-computer-applications.php."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "library",
+            "patterns": [
+                "library",
+                "book facility",
+                "is there library",
+                "library timing"
+            ],
+            "responses": [
+                "CU has a central library open from 8:00 AM to 8:00 PM with access to e-books, journals, and digital resources. Details: https://www.cuchd.in/student-services/library.php."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "infrastructure",
+            "patterns": [
+                "college infrastructure",
+                "campus",
+                "labs",
+                "building"
+            ],
+            "responses": [
+                "UIC offers modern infrastructure including air-conditioned computer labs, smart classrooms, and high-speed internet facilities."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "canteen",
+            "patterns": [
+                "canteen",
+                "food",
+                "cafeteria",
+                "food facility"
+            ],
+            "responses": [
+                "The CU campus has multiple canteens and food courts offering a wide range of hygienic and affordable food options."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "placement",
+            "patterns": [
+                "placement",
+                "companies",
+                "average package",
+                "recruitment",
+                "MCA placements"
+            ],
+            "responses": [
+                "Top companies like Amazon, IBM, TCS, Wipro, and Infosys recruit MCA students from CU. The average package ranges between ₹6-8 LPA. Details: https://www.cuchd.in/placements/."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "principal",
+            "patterns": [
+                "principal name",
+                "head of college"
+            ],
+            "responses": [
+                "The Vice-Chancellor of Chandigarh University is Prof. (Dr.) R.S. Bawa. For academic matters, please contact your department HOD."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "hod",
+            "patterns": [
+                "hod",
+                "MCA hod",
+                "hod name"
+            ],
+            "responses": [
+                "The Head of Department (MCA) at University Institute of Computing, Chandigarh University is Dr. Krishan Tuli."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "admission",
+            "patterns": [
+                "admission process",
+                "how to apply",
+                "how to take admission",
+                "MCA admission"
+            ],
+            "responses": [
+                "Admission to MCA can be done through the online portal at https://www.cuchd.in/admissions/ by filling the form and uploading required documents."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "scholarship",
+            "patterns": [
+                "scholarship",
+                "scholarship details",
+                "scholarship programs",
+                "merit scholarship"
+            ],
+            "responses": [
+                "CU offers scholarships based on CUCET score, merit, and government schemes. Details: https://www.cuchd.in/scholarships/."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "vacation",
+            "patterns": [
+                "vacation",
+                "holidays",
+                "semester break",
+                "holiday list"
+            ],
+            "responses": [
+                "The academic calendar with vacation and exam schedules is available at https://www.cuchd.in/academic/academic-calendar.php."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "sports",
+            "patterns": [
+                "sports",
+                "games",
+                "sports facility",
+                "sports activities"
+            ],
+            "responses": [
+                "Chandigarh University provides sports facilities for cricket, football, basketball, and more. Visit https://www.cuchd.in/student-services/sports.php for details."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "facilities",
+            "patterns": [
+                "college facilities",
+                "campus facilities",
+                "available facilities"
+            ],
+            "responses": [
+                "Facilities at CU include Wi-Fi campus, smart classrooms, hostels, gym, medical care, library, canteens, and research centers."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "ragging",
+            "patterns": [
+                "ragging",
+                "anti ragging",
+                "ragging policy"
+            ],
+            "responses": [
+                "Chandigarh University follows a strict zero-tolerance policy against ragging. The Anti-Ragging Committee ensures a safe and respectful environment for students."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "task",
+            "patterns": [
+                "what can you do",
+                "how can you help",
+                "your features",
+                "what are your tasks"
+            ],
+            "responses": [
+                "I can help you with MCA-related queries, admissions, syllabus, fees, placements, and general information about Chandigarh University."
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "salutation",
+            "patterns": [
+                "ok",
+                "okay",
+                "thanks",
+                "thank you",
+                "good job",
+                "nice work"
+            ],
+            "responses": [
+                "You're welcome. Is there anything else I can help you with?",
+                "Glad to help. Do you have any more questions?"
+            ],
+            "context_set": ""
+        },
+        {
+            "tag": "swear",
+            "patterns": [
+                "stupid",
+                "idiot",
+                "shut up",
+                "nonsense",
+                "fool"
+            ],
+            "responses": [
+                "Please maintain respectful language.",
+                "Let's keep our conversation polite and helpful."
+            ],
+            "context_set": ""
+        }
+    ]
+    }
