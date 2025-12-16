@@ -27,6 +27,19 @@ with open(INTENTS_FILE, "r", encoding="utf-8") as f:
     data = json.load(f)
 intents = data.get("intents", [])
 
+# Load students data into memory for O(1) lookup
+students_data = {}
+try:
+    with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
+        s_data = json.load(f)
+        for entry in s_data.get("intents", []):
+            tag = entry.get("tag", "").strip().upper()
+            if tag:
+                students_data[tag] = entry
+    logger.info(f"✅ Loaded {len(students_data)} students into memory.")
+except Exception as e:
+    logger.error(f"❌ Failed to load students file: {e}")
+
 # -------------------- PATTERN PREPROCESSING --------------------
 pattern_map, intent_by_tag, all_patterns, pattern_to_tag = {}, {}, [], []
 for it in intents:
@@ -122,13 +135,13 @@ def set_uid():
 
         logger.info(f"🔍 Checking UID: {uid_norm}")
 
-        with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
-            student_data = json.load(f)
-
-        intents_list = student_data.get("intents", [])
-        match = next((entry for entry in intents_list if entry.get("tag", "").upper() == uid_norm), None)
+        # Optimization: Use in-memory lookup O(1) instead of file read O(N)
+        match = students_data.get(uid_norm)
 
         if not match:
+            # If the file content is expected to change at runtime without restart,
+            # one might consider a fallback or reload mechanism here.
+            # But for standard deployment, static loading is preferred for performance.
             return jsonify({"ok": False, "message": "UID not found"}), 404
 
         responses = match.get("responses", [])
