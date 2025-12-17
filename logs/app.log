@@ -1,0 +1,11 @@
+2025-12-17 20:15:52,702 [INFO] Use pytorch device_name: cpu
+2025-12-17 20:15:52,703 [INFO] Load pretrained SentenceTransformer: distiluse-base-multilingual-cased-v2
+2025-12-17 20:15:58,419 [INFO] ✅ SentenceTransformer embeddings initialized.
+2025-12-17 20:15:58,435 [WARNING]  * Debugger is active!
+2025-12-17 20:15:58,435 [INFO]  * Debugger PIN: 132-491-319
+2025-12-17 20:16:05,422 [INFO] Use pytorch device_name: cpu
+2025-12-17 20:16:05,423 [INFO] Load pretrained SentenceTransformer: distiluse-base-multilingual-cased-v2
+2025-12-17 20:16:08,507 [INFO] ✅ SentenceTransformer embeddings initialized.
+2025-12-17 20:16:08,515 [INFO] 🔍 Checking UID:
+2025-12-17 20:16:08,517 [INFO] 🔍 Checking UID: INVALIDUID
+2025-12-17 20:16:08,518 [INFO] 🔍 Checking UID: 24MCA20002
