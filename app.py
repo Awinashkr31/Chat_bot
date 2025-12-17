@@ -27,6 +27,10 @@ with open(INTENTS_FILE, "r", encoding="utf-8") as f:
     data = json.load(f)
 intents = data.get("intents", [])
 
+# Load student data at startup to avoid File I/O on every request
+with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
+    STUDENT_DATA = json.load(f)
+
 # -------------------- PATTERN PREPROCESSING --------------------
 pattern_map, intent_by_tag, all_patterns, pattern_to_tag = {}, {}, [], []
 for it in intents:
@@ -122,10 +126,7 @@ def set_uid():
 
         logger.info(f"🔍 Checking UID: {uid_norm}")
 
-        with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
-            student_data = json.load(f)
-
-        intents_list = student_data.get("intents", [])
+        intents_list = STUDENT_DATA.get("intents", [])
         match = next((entry for entry in intents_list if entry.get("tag", "").upper() == uid_norm), None)
 
         if not match:
