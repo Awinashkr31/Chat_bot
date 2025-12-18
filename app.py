@@ -27,6 +27,13 @@ with open(INTENTS_FILE, "r", encoding="utf-8") as f:
     data = json.load(f)
 intents = data.get("intents", [])
 
+# Preload students data for O(1) lookup
+with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
+    student_data_raw = json.load(f)
+student_intents_list = student_data_raw.get("intents", [])
+student_lookup = {entry.get("tag", "").upper(): entry for entry in student_intents_list if "tag" in entry}
+logger.info(f"✅ Loaded {len(student_lookup)} student records into memory.")
+
 # -------------------- PATTERN PREPROCESSING --------------------
 pattern_map, intent_by_tag, all_patterns, pattern_to_tag = {}, {}, [], []
 for it in intents:
@@ -122,11 +129,7 @@ def set_uid():
 
         logger.info(f"🔍 Checking UID: {uid_norm}")
 
-        with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
-            student_data = json.load(f)
-
-        intents_list = student_data.get("intents", [])
-        match = next((entry for entry in intents_list if entry.get("tag", "").upper() == uid_norm), None)
+        match = student_lookup.get(uid_norm)
 
         if not match:
             return jsonify({"ok": False, "message": "UID not found"}), 404
