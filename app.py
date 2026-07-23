@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 from deep_translator import GoogleTranslator as Translator
 from gtts import gTTS
 from sklearn.metrics.pairwise import cosine_similarity
+from config import Config
 
 try:
     from sentence_transformers import SentenceTransformer
@@ -34,8 +35,8 @@ logger.setLevel(logging.INFO)
 logger.addHandler(log_handler)
 
 # -------------------- DATA FILES --------------------
-INTENTS_FILE = "intents.json"
-STUDENTS_FILE = os.environ.get("STUDENTS_DATA_PATH", "students.json")
+INTENTS_FILE = Config.INTENTS_FILE
+STUDENTS_FILE = Config.STUDENTS_FILE
 
 with open(INTENTS_FILE, "r", encoding="utf-8") as f:
     data = json.load(f)
@@ -68,7 +69,7 @@ if SentenceTransformer and all_patterns:
         HASH_FILE = "models/intents_hash.txt"
         current_hash = get_file_hash(INTENTS_FILE)
         
-        EMBED = SentenceTransformer("distiluse-base-multilingual-cased-v2")
+        EMBED = SentenceTransformer(Config.SENTENCE_MODEL)
         
         if os.path.exists(CACHE_FILE) and os.path.exists(HASH_FILE):
             with open(HASH_FILE, "r") as f:
@@ -167,7 +168,7 @@ def resolve_intent(text):
         best_idx = int(sims.argmax())
         best_score = float(sims[best_idx])
         tag = pattern_to_tag[best_idx]
-        if best_score >= 0.6:
+        if best_score >= Config.SIMILARITY_THRESHOLD:
             resp = random.choice(intent_by_tag[tag].get("responses", ["Sorry, I didn’t understand."]))
             return tag, resp
     return "unknown", random.choice(["Sorry, I didn’t understand.", "Could you rephrase that?"])
@@ -259,5 +260,4 @@ def serve_static(filename):
     return send_from_directory("static", filename)
 
 if __name__ == "__main__":
-    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
-    app.run(host="0.0.0.0", port=5000, debug=debug_mode)
+    app.run(host=Config.FLASK_HOST, port=Config.FLASK_PORT, debug=Config.FLASK_DEBUG)
