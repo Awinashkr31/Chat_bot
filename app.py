@@ -10,7 +10,18 @@ except Exception:
     SentenceTransformer = None
 
 # -------------------- FLASK SETUP --------------------
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 app = Flask(__name__, static_folder="static", template_folder="templates")
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     filename="logs/app.log",
@@ -114,11 +125,23 @@ def home():
     return render_template("index.html")
 
 @app.route("/set_uid", methods=["POST"])
+@limiter.limit("60 per minute")
 def set_uid():
     try:
-        data = request.get_json(force=True)
-        raw_uid = (data.get("uid") or "").strip().upper()
+        try:
+            data = request.get_json(force=True)
+        except Exception:
+            return jsonify({"ok": False, "message": "Invalid JSON"}), 400
+            
+        raw_uid = data.get("uid", "")
+        if not isinstance(raw_uid, str):
+            return jsonify({"ok": False, "message": "Invalid UID format"}), 400
+            
+        raw_uid = raw_uid.strip().upper()
         uid_norm = re.sub(r"[^A-Z0-9]", "", raw_uid)
+        
+        if not re.match(r"^\d{2}[A-Z]{3}\d{5}$", uid_norm):
+            return jsonify({"ok": False, "message": "Invalid UID pattern. Expected format like 24MCA20002"}), 400
 
         logger.info(f"🔍 Checking UID: {uid_norm}")
 
@@ -146,11 +169,25 @@ def set_uid():
         return jsonify({"ok": False, "message": str(e)}), 500
 
 @app.route("/chat", methods=["POST"])
+@limiter.limit("60 per minute")
 def chat():
-    d = request.get_json(force=True)
+    try:
+        d = request.get_json(force=True)
+    except Exception:
+        return jsonify({"response": "Invalid JSON", "audio": None, "suggestions": []}), 400
+        
     msg = d.get("message", "")
-    uid = d.get("uid", "").upper().strip() or None
-    lang = d.get("language", "en")
+    if not isinstance(msg, str):
+        return jsonify({"response": "Invalid message format", "audio": None, "suggestions": []}), 400
+        
+    if len(msg) > 500:
+        return jsonify({"response": "Message too long (max 500 characters)", "audio": None, "suggestions": []}), 400
+        
+    uid_raw = d.get("uid", "")
+    uid = uid_raw.upper().strip() if isinstance(uid_raw, str) else None
+    
+    lang_raw = d.get("language", "en")
+    lang = lang_raw if isinstance(lang_raw, str) else "en"
 
     tag, resp = resolve_intent(msg)
     translated, audio = translate_and_speak(resp, lang)
@@ -169,4 +206,5 @@ def serve_static(filename):
     return send_from_directory("static", filename)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+    app.run(host="0.0.0.0", port=5000, debug=debug_mode)
