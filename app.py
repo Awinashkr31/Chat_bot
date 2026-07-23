@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # -------------------- DATA FILES --------------------
 INTENTS_FILE = "intents.json"
-STUDENTS_FILE = "students.json"
+STUDENTS_FILE = os.environ.get("STUDENTS_DATA_PATH", "students.json")
 
 with open(INTENTS_FILE, "r", encoding="utf-8") as f:
     data = json.load(f)

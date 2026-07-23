@@ -1,0 +1,16 @@
+# Ignore students data with PII
+students.json
+
+# Deep learning models and environment
+models/
+__pycache__/
+*.pyc
+
+# Logs and generated audio
+logs/
+static/*.mp3
+
+# Environment variables
+.env
+venv/
+.venv/

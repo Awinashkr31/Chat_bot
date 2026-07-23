@@ -1,0 +1,28 @@
+{
+    "intents": [
+        {
+            "tag": "24MCA10001",
+            "patterns": [
+                "24MCA10001",
+                "Alice"
+            ],
+            "responses": [
+                "Alice, how can I assist you today?",
+                " Alice from Chandigarh University MCA Department . roll number is 24MCA10001, And email address is alice.fake@example.com, and they are enrolled in MCA.",
+                " I can help with information related to Alice. Roll number is 24MCA10001, and email is alice.fake@example.com."
+            ]
+        },
+        {
+            "tag": "24MCA10002",
+            "patterns": [
+                "24MCA10002",
+                "Bob"
+            ],
+            "responses": [
+                "Bob, how can I assist you today?",
+                " Bob from Chandigarh University MCA Department . roll number is 24MCA10002, And email address is bob.fake@example.com, and they are enrolled in MCA.",
+                " I can help with information related to Bob. Roll number is 24MCA10002, and email is bob.fake@example.com."
+            ]
+        }
+    ]
+}
