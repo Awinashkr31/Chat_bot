@@ -12,8 +12,8 @@ def client():
 
 def test_resolve_intent():
     # Exact match
-    tag, resp = resolve_intent("24MCA10001")
-    assert tag == "24MCA10001" or resp != "Sorry, I didn’t understand."
+    tag, resp = resolve_intent("Hi")
+    assert tag == "greeting" or resp != "Sorry, I didn’t understand."
 
     # Empty match
     tag, resp = resolve_intent("")
