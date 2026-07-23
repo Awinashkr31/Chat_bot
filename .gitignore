@@ -14,3 +14,4 @@ static/*.mp3
 .env
 venv/
 .venv/
+cache/

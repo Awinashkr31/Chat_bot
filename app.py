@@ -8,6 +8,9 @@ from deep_translator import GoogleTranslator as Translator
 from gtts import gTTS
 from sklearn.metrics.pairwise import cosine_similarity
 from config import Config
+from retrieval import RetrievalSystem
+import rapidfuzz
+import re
 
 try:
     from sentence_transformers import SentenceTransformer
@@ -37,6 +40,21 @@ logger.addHandler(log_handler)
 # -------------------- DATA FILES --------------------
 INTENTS_FILE = Config.INTENTS_FILE
 STUDENTS_FILE = Config.STUDENTS_FILE
+CACHE_FILE = Config.CACHE_FILE
+HASH_FILE = Config.HASH_FILE
+
+# -------------------- CUSTOM LOGGERS --------------------
+def setup_file_logger(name, log_file):
+    l = logging.getLogger(name)
+    l.setLevel(logging.INFO)
+    fh = logging.FileHandler(os.path.join(Config.LOGS_DIR, log_file), encoding='utf-8')
+    fh.setFormatter(logging.Formatter("%(message)s"))
+    l.addHandler(fh)
+    return l
+
+intent_logger = setup_file_logger("intent_logger", "intent_queries.log")
+unmatched_logger = setup_file_logger("unmatched_logger", "unmatched_queries.log")
+corrections_logger = setup_file_logger("corrections_logger", "corrections.log")
 
 with open(INTENTS_FILE, "r", encoding="utf-8") as f:
     data = json.load(f)
@@ -54,7 +72,14 @@ for it in intents:
         pattern_to_tag.append(tag)
 
 # -------------------- BERT SETUP --------------------
-EMBED, PATTERN_EMB = None, None
+EMBED, PATTERN_EMB, retriever = None, None, None
+
+VOCAB = set()
+for intent in intents:
+    for pattern in intent.get("patterns", []):
+        words = re.findall(r'\b\w+\b', pattern.lower())
+        VOCAB.update(words)
+VOCAB = sorted(list(VOCAB))
 
 def get_file_hash(filepath):
     hasher = hashlib.md5()
@@ -76,18 +101,23 @@ if SentenceTransformer and all_patterns:
                 saved_hash = f.read().strip()
             if saved_hash == current_hash:
                 PATTERN_EMB = np.load(CACHE_FILE)
-                logger.info("✅ Loaded cached embeddings.")
+                logger.info("Loaded cached embeddings.")
         
         if PATTERN_EMB is None:
             PATTERN_EMB = EMBED.encode(all_patterns, convert_to_numpy=True)
             np.save(CACHE_FILE, PATTERN_EMB)
             with open(HASH_FILE, "w") as f:
                 f.write(current_hash)
-            logger.info("✅ SentenceTransformer embeddings initialized and cached.")
+            logger.info("SentenceTransformer embeddings initialized and cached.")
+            
+        retriever = RetrievalSystem(EMBED)
+        retriever.load_documents("docs")
     except Exception as e:
-        logger.warning(f"⚠️ SentenceTransformer init failed: {e}")
+        logger.warning(f"SentenceTransformer init failed: {e}")
 
 # -------------------- HELPER DATA --------------------
+SESSION_STORE = {}
+
 SEARCH_KEYWORDS = [
     "MCA syllabus", "admission process", "MCA fees", "college timing",
     "scholarship options", "hostel information", "faculty details",
@@ -154,26 +184,97 @@ def translate_and_speak(text, lang_code="en"):
     return translated, audio_url
 
 # -------------------- CORE INTENT LOGIC --------------------
-def resolve_intent(text):
+def resolve_intent(text, session_id=None):
     txt = text.strip().lower()
     if not txt:
-        return "unknown", "Please rephrase your question."
-    if txt in pattern_map:
-        tag = pattern_map[txt][0]
+        return "unknown", "Please rephrase your question.", [], False
+        
+    recent_tags = SESSION_STORE.get(session_id, {}).get("history", []) if session_id else []
+    
+    def score_text(t):
+        if t in pattern_map:
+            return pattern_map[t][0], 1.0, None
+        if EMBED and PATTERN_EMB is not None:
+            q_emb = EMBED.encode([t], convert_to_numpy=True)
+            sims = cosine_similarity(q_emb, PATTERN_EMB)[0]
+            for i, p_tag in enumerate(pattern_to_tag):
+                if p_tag in recent_tags:
+                    sims[i] += 0.05
+            best_idx = int(sims.argmax())
+            return pattern_to_tag[best_idx], float(sims[best_idx]), sims
+        return "unknown", 0.0, None
+
+    tag, best_score, sims = score_text(txt)
+    corrected_txt = txt
+    
+    if best_score < 0.75:
+        words = re.findall(r'\b\w+\b', txt)
+        corrected_words = []
+        changed = False
+        for w in words:
+            if w not in VOCAB:
+                match = rapidfuzz.process.extractOne(w, VOCAB, scorer=rapidfuzz.distance.Levenshtein.distance)
+                if match and match[1] <= 2:
+                    corrected_words.append(match[0])
+                    changed = True
+                else:
+                    corrected_words.append(w)
+            else:
+                corrected_words.append(w)
+                
+        if changed:
+            candidate_txt = " ".join(corrected_words)
+            c_tag, c_best_score, c_sims = score_text(candidate_txt)
+            if c_best_score > best_score:
+                corrected_txt = candidate_txt
+                tag, best_score, sims = c_tag, c_best_score, c_sims
+                corrections_logger.info(f"{time.time()}|{txt}|{corrected_txt}")
+    
+    # Log query
+    intent_logger.info(f"{time.time()}|{corrected_txt}|{tag}|{best_score:.4f}")
+            
+    if best_score >= 0.75:
         resp = random.choice(intent_by_tag[tag].get("responses", ["Sorry, I didn’t understand."]))
-        return tag, resp
-    if EMBED and PATTERN_EMB is not None:
-        q_emb = EMBED.encode([txt], convert_to_numpy=True)
-        sims = cosine_similarity(q_emb, PATTERN_EMB)[0]
-        best_idx = int(sims.argmax())
-        best_score = float(sims[best_idx])
-        tag = pattern_to_tag[best_idx]
-        if best_score >= Config.SIMILARITY_THRESHOLD:
-            resp = random.choice(intent_by_tag[tag].get("responses", ["Sorry, I didn’t understand."]))
-            return tag, resp
-    return "unknown", random.choice(["Sorry, I didn’t understand.", "Could you rephrase that?"])
+        return tag, resp, [], False
+            
+    elif best_score >= 0.55:
+        resp = random.choice(intent_by_tag[tag].get("responses", ["Sorry, I didn’t understand."]))
+        
+        unmatched_logger.info(f"{time.time()}|{corrected_txt}|{tag}|{best_score:.4f}")
+            
+        alt_tags = []
+        if sims is not None:
+            sorted_indices = sims.argsort()[::-1]
+            for idx in sorted_indices[1:]:
+                alt_tag = pattern_to_tag[idx]
+                if alt_tag != tag and alt_tag not in alt_tags:
+                    alt_tags.append(alt_tag)
+                if len(alt_tags) >= 2: break
+                
+        did_you_mean = [intent_by_tag[t]["patterns"][0] for t in alt_tags if intent_by_tag[t].get("patterns")]
+        resp += "\n\n*(Confidence is slightly low. Did you mean something else?)*"
+        return tag, resp, did_you_mean, True
+            
+    unmatched_logger.info(f"{time.time()}|{corrected_txt}|none|{best_score:.4f}")
+        
+    # Fallback to local FAISS retrieval
+    if retriever:
+        rag_response = retriever.search(corrected_txt)
+        if rag_response:
+            return "document_retrieval", rag_response, [], False
+                
+    return "unknown", random.choice(["Sorry, I didn’t understand.", "Could you rephrase that?"]), [], False
 
 # -------------------- ROUTES --------------------
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Consider adjusting CSP based on exact app needs (inline scripts, fonts, etc.)
+    # response.headers['Content-Security-Policy'] = "default-src 'self'"
+    return response
+
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -197,7 +298,7 @@ def set_uid():
         if not re.match(r"^\d{2}[A-Z]{3}\d{5}$", uid_norm):
             return jsonify({"ok": False, "message": "Invalid UID pattern. Expected format like 24MCA20002"}), 400
 
-        logger.info(f"🔍 Checking UID: {uid_norm}")
+        logger.info(f"Checking UID: {uid_norm}")
 
         with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
             student_data = json.load(f)
@@ -209,13 +310,27 @@ def set_uid():
             return jsonify({"ok": False, "message": "UID not found"}), 404
 
         responses = match.get("responses", [])
-        response = random.choice(responses) if responses else "Record found but no response data."
+        raw_response = random.choice(responses) if responses else ""
+        
+        # Extract PII
+        patterns = match.get("patterns", [])
+        first_name = patterns[1] if len(patterns) > 1 else "Student"
+        
+        email_match = re.search(r'[\w\.-]+@[\w\.-]+', raw_response)
+        email = email_match.group(0) if email_match else ""
+        
+        clean_response = f"Hi {first_name} — how can I help with MCA at CU today?"
         suggestions = suggest_questions(uid_norm, n=6)
 
         return jsonify({
             "ok": True,
-            "response": response,
-            "suggestions": suggestions
+            "response": clean_response,
+            "suggestions": suggestions,
+            "profile": {
+                "name": first_name,
+                "roll": uid_norm,
+                "email": email
+            }
         })
 
     except Exception as e:
@@ -240,16 +355,26 @@ def chat():
     uid_raw = d.get("uid", "")
     uid = uid_raw.upper().strip() if isinstance(uid_raw, str) else None
     
+    session_id = d.get("session_id", "default")
+    
     lang_raw = d.get("language", "en")
     lang = lang_raw if isinstance(lang_raw, str) else "en"
 
-    tag, resp = resolve_intent(msg)
+    tag, resp, alt_suggestions, is_clarify = resolve_intent(msg, session_id=session_id)
+    
+    # Update context
+    if session_id not in SESSION_STORE: SESSION_STORE[session_id] = {"history": []}
+    if tag != "unknown" and tag != "document_retrieval":
+        SESSION_STORE[session_id]["history"].append(tag)
+        SESSION_STORE[session_id]["history"] = SESSION_STORE[session_id]["history"][-3:]
+    
     translated, audio = translate_and_speak(resp, lang)
     intent_sug = suggest_questions(uid)
     search_sug = generate_search_suggestions(msg)
-    suggestions = list(dict.fromkeys(intent_sug + search_sug))[:6]
+    
+    suggestions = list(dict.fromkeys(alt_suggestions + intent_sug + search_sug))[:6]
 
-    return jsonify({"response": translated, "audio": audio, "suggestions": suggestions})
+    return jsonify({"response": translated, "audio": audio, "suggestions": suggestions, "is_clarify": is_clarify})
 
 @app.route("/reset", methods=["POST"])
 def reset():

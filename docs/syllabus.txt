@@ -1,0 +1,28 @@
+# Chandigarh University - MCA (AI & ML) Syllabus and Information
+
+## Program Overview
+The Master of Computer Applications (MCA) in Artificial Intelligence and Machine Learning at Chandigarh University is a two-year postgraduate program designed to build strong foundations in modern computing. 
+The curriculum focuses heavily on practical applications of deep learning, natural language processing, and computer vision.
+
+## Fee Structure
+The tuition fee for the MCA program is ₹80,000 per semester. Additional fees include an examination fee of ₹2,000 per semester and a one-time security deposit of ₹5,000 (refundable).
+Hostel fees range from ₹1,05,000 to ₹1,40,000 per year depending on the AC/Non-AC room category chosen.
+
+## Semester 1
+Core subjects in the first semester include:
+- Advanced Data Structures and Algorithms
+- Foundations of Artificial Intelligence
+- Python Programming for Data Science
+- Database Management Systems
+
+## Semester 2
+The second semester introduces more specialized topics:
+- Machine Learning Techniques
+- Big Data Analytics
+- Cloud Computing Architecture
+- Software Engineering Principles
+
+Students must also complete a mini-project applying machine learning to a real-world dataset.
+
+## Admission Process
+Admission is based on the CUCET (Chandigarh University Common Entrance Test) score. Scholarships up to 100% are available for top scorers in CUCET. Minimum eligibility is a Bachelor's degree with 50% aggregate marks, preferably with Mathematics at the 10+2 level.

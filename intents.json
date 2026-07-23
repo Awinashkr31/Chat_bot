@@ -404,6 +404,22 @@
             "context_set": ""
         },
         {
+            "tag": "education_loan",
+            "patterns": [
+                "loan",
+                "education loan",
+                "study loan",
+                "bank loan",
+                "loan for admission",
+                "loan letter",
+                "loan facility"
+            ],
+            "responses": [
+                "Chandigarh University provides assistance for education loans by issuing a loan letter after admission. Tie-ups with major banks are available."
+            ],
+            "context_set": ""
+        },
+        {
             "tag": "task",
             "patterns": [
                 "what can you do",

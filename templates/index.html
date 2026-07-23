@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MCA Chatbot</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('serve_static', filename='style.css') }}" />
 </head>
 
@@ -12,7 +15,10 @@
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <h1>MCA Chatbot</h1>
+      <div style="display:flex; align-items:center; gap: 10px;">
+        <span style="font-size: 1.5rem;">🎓</span>
+        <h1>Chandigarh University MCA Chatbot</h1>
+      </div>
       <div>
         <button id="resetBtn">Reset</button>
         <button id="muteBtn" class="muted">Mute</button>
@@ -22,14 +28,14 @@
     <!-- UID Input -->
     <div class="uid-area" id="uidArea">
       <label for="uidInput">Enter UID (or skip)</label>
-      <input id="uidInput" placeholder="24MCI10130" />
+      <input id="uidInput" inputmode="text" placeholder="e.g. 24MCA10001" />
       <button id="uidSubmit">Continue</button>
       <button id="uidSkip" style="background:#fff;border:1px solid #d1d5db;color:#0b1220;">Skip</button>
       <div id="uidMsg" class="small"></div>
     </div>
 
     <!-- Chat Area -->
-    <div id="chat" class="chat"></div>
+    <div id="chat" class="chat" aria-live="polite"></div>
 
     <!-- Footer -->
     <div class="footer">

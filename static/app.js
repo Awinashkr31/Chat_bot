@@ -14,6 +14,16 @@
 
   let USER_UID = localStorage.getItem('mca_uid') || '';
   let MUTED = localStorage.getItem('mca_muted') === '1';
+  let SESSION_ID = localStorage.getItem('mca_session_id');
+  if (!SESSION_ID) {
+    SESSION_ID = Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('mca_session_id', SESSION_ID);
+  }
+  let isSpeaking = false;
+  
+  chat.addEventListener('click', () => {
+    if (isSpeaking && window.speechSynthesis) window.speechSynthesis.cancel();
+  });
 
   function setMuted(v) {
     MUTED = !!v;
@@ -23,18 +33,43 @@
   }
   setMuted(MUTED);
 
-  function addMessage(cls, text) {
+  function saveMessageToHistory(cls, text, isClarify=false) {
+    let history = JSON.parse(localStorage.getItem('mca_history') || '[]');
+    history.push({ cls, text, isClarify });
+    if (history.length > 50) history = history.slice(-50);
+    localStorage.setItem('mca_history', JSON.stringify(history));
+  }
+
+  function addMessage(cls, text, save=true, isClarify=false) {
     const m = document.createElement('div');
     m.className = 'message ' + cls;
-    m.textContent = text;
+    if (isClarify) m.classList.add('clarify-message');
+    
+    let formattedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+    m.innerHTML = formattedText;
+    
+    const time = document.createElement('span');
+    time.className = 'timestamp';
+    const now = new Date();
+    time.textContent = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    m.appendChild(time);
+    
     chat.appendChild(m);
     chat.scrollTop = chat.scrollHeight;
+    
+    if (save) saveMessageToHistory(cls, text, isClarify);
   }
+
+  let initialHistory = JSON.parse(localStorage.getItem('mca_history') || '[]');
+  initialHistory.forEach(h => addMessage(h.cls, h.text, false, h.isClarify));
 
   function speak(text, lang) {
     if (MUTED) return;
     const u = new SpeechSynthesisUtterance(text);
     u.lang = lang === 'hi' ? 'hi-IN' : (lang === 'pa' ? 'pa-IN' : 'en-US');
+    u.onstart = () => { isSpeaking = true; document.querySelector('.header').style.borderBottom = "3px solid var(--accent)"; };
+    u.onend = () => { isSpeaking = false; document.querySelector('.header').style.borderBottom = "none"; };
+    u.onerror = () => { isSpeaking = false; document.querySelector('.header').style.borderBottom = "none"; };
     speechSynthesis.cancel();
     speechSynthesis.speak(u);
   }
@@ -63,6 +98,36 @@
     return res.json();
   }
 
+  let typingEl = null;
+  function showTyping() {
+    if (typingEl) return;
+    typingEl = document.createElement('div');
+    typingEl.className = 'typing-indicator';
+    typingEl.innerHTML = '<span></span><span></span><span></span>';
+    chat.appendChild(typingEl);
+    chat.scrollTop = chat.scrollHeight;
+  }
+  
+  function hideTyping() {
+    if (typingEl) { typingEl.remove(); typingEl = null; }
+  }
+
+  function addProfileCard(profile) {
+    const card = document.createElement('div');
+    card.className = 'profile-card';
+    card.innerHTML = `
+      <div class="profile-header">
+        <strong>Your Profile</strong>
+        <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;cursor:pointer;">✕</button>
+      </div>
+      <div>Name: ${profile.name}</div>
+      <div>Roll: ${profile.roll}</div>
+      <div>Email: ${profile.email}</div>
+    `;
+    chat.appendChild(card);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
   uidSubmit.onclick = async () => {
     const uid = uidInput.value.trim();
     if (!uid) return;
@@ -72,6 +137,7 @@
       USER_UID = uid;
       localStorage.setItem('mca_uid', USER_UID);
       uidArea.style.display = 'none';
+      if (data.profile) addProfileCard(data.profile);
       addMessage('bot', data.response);
       speak(data.response, 'en');
       if (data.suggestions) showSuggestions(data.suggestions);
@@ -89,8 +155,9 @@
   };
 
   resetBtn.onclick = async () => {
-    await fetch('/reset', { method: 'POST' });
+    try { await fetch('/reset', { method: 'POST' }); } catch(e) {}
     localStorage.removeItem('mca_uid');
+    localStorage.removeItem('mca_history');
     USER_UID = '';
     uidArea.style.display = 'flex';
     chat.innerHTML = '';
@@ -107,10 +174,17 @@
     if (!txt) return;
     addMessage('user', txt);
     messageInput.value = '';
-    const data = await postJSON('/chat', { message: txt, uid: USER_UID, language: language.value });
-    addMessage('bot', data.response);
-    speak(data.response, language.value);
-    if (data.suggestions) showSuggestions(data.suggestions);
+    showTyping();
+    try {
+      const data = await postJSON('/chat', { message: txt, uid: USER_UID, language: language.value, session_id: SESSION_ID });
+      hideTyping();
+      addMessage('bot', data.response, true, data.is_clarify);
+      speak(data.response, language.value);
+      if (data.suggestions) showSuggestions(data.suggestions);
+    } catch(err) {
+      hideTyping();
+      addMessage('bot', "Something went wrong, please try again.");
+    }
   }
 
   voiceBtn.onclick = () => {

@@ -11,3 +11,12 @@ class Config:
     FLASK_HOST = os.environ.get("FLASK_HOST", "0.0.0.0")
     FLASK_PORT = int(os.environ.get("FLASK_PORT", 5000))
     FLASK_DEBUG = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+    
+    CACHE_DIR = os.environ.get("CACHE_DIR", "cache")
+    LOGS_DIR = os.environ.get("LOGS_DIR", "logs")
+    CACHE_FILE = os.path.join(CACHE_DIR, "PATTERN_EMB.npy")
+    HASH_FILE = os.path.join(CACHE_DIR, "patterns.hash")
+
+# Ensure required directories exist
+os.makedirs(Config.CACHE_DIR, exist_ok=True)
+os.makedirs(Config.LOGS_DIR, exist_ok=True)

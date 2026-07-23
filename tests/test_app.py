@@ -12,16 +12,16 @@ def client():
 
 def test_resolve_intent():
     # Exact match
-    tag, resp = resolve_intent("Hi")
+    tag, resp, alt, is_clarify = resolve_intent("Hi")
     assert tag == "greeting" or resp != "Sorry, I didn’t understand."
 
     # Empty match
-    tag, resp = resolve_intent("")
+    tag, resp, alt, is_clarify = resolve_intent("")
     assert tag == "unknown"
 
     # Some invalid intent
-    tag, resp = resolve_intent("some gibberish question that doesn't make sense at all XYZ")
-    assert tag == "unknown"
+    tag, resp, alt, is_clarify = resolve_intent("some gibberish question that doesn't make sense at all XYZ")
+    assert tag in ("unknown", "document_retrieval")
 
 def test_home(client):
     response = client.get("/")
