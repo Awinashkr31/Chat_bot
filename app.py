@@ -1,4 +1,8 @@
 import os, json, logging, random, re
+import hashlib, uuid, time, concurrent.futures
+from threading import Thread
+from logging.handlers import RotatingFileHandler
+import numpy as np
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from deep_translator import GoogleTranslator as Translator
 from gtts import gTTS
@@ -23,12 +27,11 @@ limiter = Limiter(
 )
 
 os.makedirs("logs", exist_ok=True)
-logging.basicConfig(
-    filename="logs/app.log",
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
+log_handler = RotatingFileHandler("logs/app.log", maxBytes=5000000, backupCount=3)
+log_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(log_handler)
 
 # -------------------- DATA FILES --------------------
 INTENTS_FILE = "intents.json"
@@ -51,11 +54,35 @@ for it in intents:
 
 # -------------------- BERT SETUP --------------------
 EMBED, PATTERN_EMB = None, None
+
+def get_file_hash(filepath):
+    hasher = hashlib.md5()
+    with open(filepath, "rb") as f:
+        hasher.update(f.read())
+    return hasher.hexdigest()
+
 if SentenceTransformer and all_patterns:
     try:
+        os.makedirs("models", exist_ok=True)
+        CACHE_FILE = "models/pattern_embeddings.npy"
+        HASH_FILE = "models/intents_hash.txt"
+        current_hash = get_file_hash(INTENTS_FILE)
+        
         EMBED = SentenceTransformer("distiluse-base-multilingual-cased-v2")
-        PATTERN_EMB = EMBED.encode(all_patterns, convert_to_numpy=True)
-        logger.info("✅ SentenceTransformer embeddings initialized.")
+        
+        if os.path.exists(CACHE_FILE) and os.path.exists(HASH_FILE):
+            with open(HASH_FILE, "r") as f:
+                saved_hash = f.read().strip()
+            if saved_hash == current_hash:
+                PATTERN_EMB = np.load(CACHE_FILE)
+                logger.info("✅ Loaded cached embeddings.")
+        
+        if PATTERN_EMB is None:
+            PATTERN_EMB = EMBED.encode(all_patterns, convert_to_numpy=True)
+            np.save(CACHE_FILE, PATTERN_EMB)
+            with open(HASH_FILE, "w") as f:
+                f.write(current_hash)
+            logger.info("✅ SentenceTransformer embeddings initialized and cached.")
     except Exception as e:
         logger.warning(f"⚠️ SentenceTransformer init failed: {e}")
 
@@ -84,19 +111,45 @@ def suggest_questions(uid=None, n=6):
     random.shuffle(pool)
     return pool[:n] if pool else ["college timing", "MCA syllabus", "fees", "hostel", "admission process"]
 
-def translate_and_speak(text, lang_code="en"):
+def cleanup_old_audio():
+    now = time.time()
+    static_dir = "static"
+    if not os.path.exists(static_dir): return
+    for f in os.listdir(static_dir):
+        if f.startswith("output_") and f.endswith(".mp3"):
+            path = os.path.join(static_dir, f)
+            if now - os.path.getmtime(path) > 300: # 5 minutes
+                try: os.remove(path)
+                except: pass
+
+def _do_translate_and_tts(text, lang_code, out_path):
     try:
         translated = Translator(source="auto", target=lang_code).translate(text)
     except Exception:
         translated = text
-    audio_url = None
     try:
         tts = gTTS(translated, lang=lang_code)
-        out_path = os.path.join("static", "output.mp3")
         tts.save(out_path)
-        audio_url = "/static/output.mp3"
+        return translated, True
     except Exception:
-        pass
+        return translated, False
+
+def translate_and_speak(text, lang_code="en"):
+    Thread(target=cleanup_old_audio).start()
+    
+    unique_id = uuid.uuid4().hex
+    out_path = os.path.join("static", f"output_{unique_id}.mp3")
+    audio_url = None
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(_do_translate_and_tts, text, lang_code, out_path)
+        try:
+            translated, audio_ok = future.result(timeout=5)
+            if audio_ok:
+                audio_url = f"/static/output_{unique_id}.mp3"
+        except concurrent.futures.TimeoutError:
+            translated = text # Fallback to original text on timeout
+
     return translated, audio_url
 
 # -------------------- CORE INTENT LOGIC --------------------
